@@ -84,7 +84,9 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 
 	private static ReadingType? TryGetReading(XElement xElement, out string reading)
 	{
-		reading = xElement.Value.Replace('.', '|');
+		reading = xElement.Value
+			.Replace('.', '|')
+			.Replace("-", string.Empty);
 
 		if (string.IsNullOrEmpty(xElement.Value))
 			return null;
