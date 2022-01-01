@@ -1,4 +1,4 @@
-﻿using MyNihongo.JmParser.Kanjidic.Models;
+﻿using System.Xml.Linq;
 using MyNihongo.JmParser.Kanjidic.Services;
 using MyNihongo.JmParser.Utils;
 
@@ -11,15 +11,18 @@ internal sealed class ParsingService
 		if (!File.Exists(args.SourceFile))
 			throw new Exception($"File not exists at `{args.SourceFile}`");
 
-		var kanjidic = await ReadKanjidicAsync(args)
+		var xml = await ParseXml(args)
 			.ConfigureAwait(false);
+
+		new KanjidicParsingService()
+			.Parse(xml);
 	}
 
-	private static async Task<KanjidicModel[]> ReadKanjidicAsync(Args args)
+	private static async Task<XDocument> ParseXml(Args args, CancellationToken ct = default)
 	{
 		await using var stream = FileUtils.AsyncStream(args.SourceFile, FileMode.Open, FileAccess.Read, FileShare.Read);
 
-		return new KanjidicParsingService()
-			.Parse(stream);
+		return await XDocument.LoadAsync(stream, LoadOptions.None, ct)
+			.ConfigureAwait(false);
 	}
 }

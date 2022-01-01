@@ -1,11 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-
-namespace MyNihongo.JmParser.Kanjidic.Models;
+﻿namespace MyNihongo.JmParser.Kanjidic.Models;
 
 public sealed record KanjidicModel
 {
+	public char Character { get; internal set; }
+
+	public byte JlptLevel { get; internal set; }
 }
