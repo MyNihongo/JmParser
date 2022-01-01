@@ -14,7 +14,7 @@ internal sealed class ParsingService
 		var xml = await ParseXml(args)
 			.ConfigureAwait(false);
 
-		new KanjidicParsingService()
+		var items = new KanjidicParsingService()
 			.Parse(xml);
 	}
 

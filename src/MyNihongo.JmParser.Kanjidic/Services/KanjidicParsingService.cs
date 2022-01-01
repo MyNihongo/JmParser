@@ -46,7 +46,7 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 					}
 				case "jlpt":
 					{
-						current!.JlptLevel = byte.Parse(xElement.Value);
+						current!.JlptLevel = GetJlptLevel(xElement.Value);
 						break;
 					}
 				case "reading":
@@ -69,6 +69,17 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 		}
 
 		return list;
+	}
+
+	public static byte GetJlptLevel(string jlptStriing)
+	{
+		var jlpt = byte.Parse(jlptStriing);
+		
+		// old level 2 is divided between N2 and N3
+		if (jlpt >= 3)
+			jlpt++;
+
+		return jlpt;
 	}
 
 	private static ReadingType? TryGetReading(XElement xElement, out string reading)
