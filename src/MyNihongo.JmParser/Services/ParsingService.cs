@@ -1,4 +1,6 @@
 ﻿using System.Xml.Linq;
+using MyNihongo.JmParser.Enums;
+using MyNihongo.JmParser.Kanjidic.Models;
 using MyNihongo.JmParser.Kanjidic.Services;
 using MyNihongo.JmParser.Utils;
 
@@ -14,11 +16,14 @@ internal sealed class ParsingService
 		var xml = await ParseXml(args)
 			.ConfigureAwait(false);
 
-		var items = new KanjidicParsingService()
-			.Parse(xml)
-			.ToArray();
+		object data = args.ParseType switch
+		{
+			ParseType.Kanjidic => ParseKanjidic(xml),
+			_ => throw new InvalidOperationException($"Unknown {nameof(ParseType)}: {args.ParseType}")
+		};
+		
 
-		var a = "";
+
 	}
 
 	private static async Task<XDocument> ParseXml(Args args, CancellationToken ct = default)
@@ -28,4 +33,8 @@ internal sealed class ParsingService
 		return await XDocument.LoadAsync(stream, LoadOptions.None, ct)
 			.ConfigureAwait(false);
 	}
+
+	private static IEnumerable<KanjidicModel> ParseKanjidic(XDocument xml) =>
+		new KanjidicParsingService()
+			.Parse(xml);
 }

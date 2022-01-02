@@ -2,6 +2,11 @@
 using MyNihongo.JmParser;
 using MyNihongo.JmParser.Services;
 
-await Parser.Default
-	.ParseArguments<Args>(args)
+var parser = new Parser(static x =>
+{
+	x.CaseInsensitiveEnumValues = true;
+	x.HelpWriter = Console.Error;
+});
+
+await parser.ParseArguments<Args>(args)
 	.WithParsedAsync(new ParsingService().ParseAsync);
