@@ -1,6 +1,6 @@
 ﻿namespace MyNihongo.JmParser.Kanjidic.Models;
 
-public sealed record KanjidicModel
+public sealed record KanjidicModel(int Id)
 {
 	public char Character { get; internal set; }
 
