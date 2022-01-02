@@ -10,10 +10,8 @@ public sealed record KanjidicModel(int Id)
 	[JsonPropertyName("jlpt")]
 	public byte JlptLevel { get; internal set; }
 
-	[JsonPropertyName("kunYomi")]
 	public IReadOnlyList<string> KunYomi { get; internal set; } = Array.Empty<string>();
 	
-	[JsonPropertyName("onYomi")]
 	public IReadOnlyList<string> OnYomi { get; internal set; } = Array.Empty<string>();
 
 	[JsonPropertyName("en")]
