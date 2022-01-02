@@ -12,6 +12,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\MyNihongo.JmParser.Jmdic\MyNihongo.JmParser.Jmdic.csproj" />
     <ProjectReference Include="..\MyNihongo.JmParser.Kanjidic\MyNihongo.JmParser.Kanjidic.csproj" />
   </ItemGroup>
 

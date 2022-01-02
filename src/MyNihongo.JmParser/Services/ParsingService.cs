@@ -1,5 +1,7 @@
 ﻿using System.Xml.Linq;
 using MyNihongo.JmParser.Enums;
+using MyNihongo.JmParser.Jmdic.Models;
+using MyNihongo.JmParser.Jmdic.Services;
 using MyNihongo.JmParser.Kanjidic.Models;
 using MyNihongo.JmParser.Kanjidic.Services;
 using MyNihongo.JmParser.Utils;
@@ -19,11 +21,9 @@ internal sealed class ParsingService
 		object data = args.ParseType switch
 		{
 			ParseType.Kanjidic => ParseKanjidic(xml),
+			ParseType.Jmdic => ParseJmdic(xml),
 			_ => throw new InvalidOperationException($"Unknown {nameof(ParseType)}: {args.ParseType}")
 		};
-		
-
-
 	}
 
 	private static async Task<XDocument> ParseXml(Args args, CancellationToken ct = default)
@@ -36,5 +36,9 @@ internal sealed class ParsingService
 
 	private static IEnumerable<KanjidicModel> ParseKanjidic(XDocument xml) =>
 		new KanjidicParsingService()
+			.Parse(xml);
+
+	private static IEnumerable<JmdicModel> ParseJmdic(XDocument xml) =>
+		new JmdicParsingService()
 			.Parse(xml);
 }

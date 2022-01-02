@@ -15,87 +15,85 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 
 		var id = 1;
 		foreach (var xElement in xDocument.DescendantNodes().OfType<XElement>())
-		{
 			switch (xElement.Name.LocalName)
 			{
 				case "character":
+				{
+					if (current != null && current.Character != default)
 					{
-						if (current != null && current.Character != default)
-						{
-							id++;
+						id++;
 
-							current.KunYomi = kunYomi.ToArray();
-							current.OnYomi = onYomi.ToArray();
-							current.English = english.ToArray();
-							current.French = french.ToArray();
-							current.Spanish = spanish.ToArray();
-							current.Portuguese = portuguese.ToArray();
-							yield return current;
-						}
-
-						kunYomi.Clear();
-						onYomi.Clear();
-						english.Clear();
-						french.Clear();
-						spanish.Clear();
-						portuguese.Clear();
-						current = new KanjidicModel(id);
-						break;
+						current.KunYomi = kunYomi.ToArray();
+						current.OnYomi = onYomi.ToArray();
+						current.English = english.ToArray();
+						current.French = french.ToArray();
+						current.Spanish = spanish.ToArray();
+						current.Portuguese = portuguese.ToArray();
+						yield return current;
 					}
+
+					kunYomi.Clear();
+					onYomi.Clear();
+					english.Clear();
+					french.Clear();
+					spanish.Clear();
+					portuguese.Clear();
+					current = new KanjidicModel(id);
+					break;
+				}
 				case "literal":
+				{
+					if (xElement.Value.Length != 1)
 					{
-						if (xElement.Value.Length != 1)
-						{
-							current = null;
-							Console.WriteLine("Invalid length");
+						current = null;
+						Console.WriteLine("Invalid length");
 
-							goto case "character";
-						}
-
-						current!.Character = xElement.Value[0];
-						break;
+						goto case "character";
 					}
+
+					current!.Character = xElement.Value[0];
+					break;
+				}
 				case "jlpt":
-					{
-						current!.JlptLevel = GetJlptLevel(xElement.Value);
-						break;
-					}
+				{
+					current!.JlptLevel = GetJlptLevel(xElement.Value);
+					break;
+				}
 				case "reading":
+				{
+					switch (TryGetReading(xElement, out var reading))
 					{
-						switch (TryGetReading(xElement, out var reading))
-						{
-							case ReadingType.KunYomi:
-								kunYomi.Add(reading);
-								break;
-							case ReadingType.OnYomi:
-								onYomi.Add(reading);
-								break;
-						}
-
-						break;
+						case ReadingType.KunYomi:
+							kunYomi.Add(reading);
+							break;
+						case ReadingType.OnYomi:
+							onYomi.Add(reading);
+							break;
 					}
+
+					break;
+				}
 				case "meaning":
+				{
+					switch (TryGetMeaning(xElement, out var meaning))
 					{
-						switch (TryGetMeaning(xElement, out var meaning))
-						{
-							case Language.English:
-								english.Add(meaning);
-								break;
-							case Language.French:
-								french.Add(meaning);
-								break;
-							case Language.Spanish:
-								spanish.Add(meaning);
-								break;
-							case Language.Portuguese:
-								portuguese.Add(meaning);
-								break;
-						}
-
-						break;
+						case Language.English:
+							english.Add(meaning);
+							break;
+						case Language.French:
+							french.Add(meaning);
+							break;
+						case Language.Spanish:
+							spanish.Add(meaning);
+							break;
+						case Language.Portuguese:
+							portuguese.Add(meaning);
+							break;
 					}
+
+					break;
+				}
 			}
-		}
 	}
 
 	public static byte GetJlptLevel(string jlptStriing)
