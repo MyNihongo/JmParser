@@ -9,9 +9,9 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 {
 	public IEnumerable<KanjidicModel> Parse(XDocument xDocument)
 	{
-		var list = new List<KanjidicModel>(13_108);
 		KanjidicModel? current = null;
 		List<string> kunYomi = new(), onYomi = new();
+		List<string> english = new(), french = new(), spanish = new(), portuguese = new();
 
 		foreach (var xElement in xDocument.DescendantNodes().OfType<XElement>())
 		{
@@ -23,12 +23,20 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 						{
 							current.KunYomi = kunYomi.ToArray();
 							current.OnYomi = onYomi.ToArray();
-							list.Add(current);
+							current.English = english.ToArray();
+							current.French = french.ToArray();
+							current.Spanish = spanish.ToArray();
+							current.Portuguese = portuguese.ToArray();
+							yield return current;
 						}
 
 						current = new KanjidicModel();
 						kunYomi.Clear();
 						onYomi.Clear();
+						english.Clear();
+						french.Clear();
+						spanish.Clear();
+						portuguese.Clear();
 						break;
 					}
 				case "literal":
@@ -64,17 +72,33 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 						break;
 					}
 				case "meaning":
-					break;
+					{
+						switch (TryGetMeaning(xElement, out var meaning))
+						{
+							case Language.English:
+								english.Add(meaning);
+								break;
+							case Language.French:
+								french.Add(meaning);
+								break;
+							case Language.Spanish:
+								spanish.Add(meaning);
+								break;
+							case Language.Portuguese:
+								portuguese.Add(meaning);
+								break;
+						}
+
+						break;
+					}
 			}
 		}
-
-		return list;
 	}
 
 	public static byte GetJlptLevel(string jlptStriing)
 	{
 		var jlpt = byte.Parse(jlptStriing);
-		
+
 		// old level 2 is divided between N2 and N3
 		if (jlpt >= 3)
 			jlpt++;
@@ -88,7 +112,7 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 			.Replace('.', '|')
 			.Replace("-", string.Empty);
 
-		if (string.IsNullOrEmpty(xElement.Value))
+		if (string.IsNullOrEmpty(reading))
 			return null;
 
 		return xElement.Attribute(XNames.ReadingType)?.Value switch
@@ -96,6 +120,23 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 			"ja_on" => ReadingType.OnYomi,
 			"ja_kun" => ReadingType.KunYomi,
 			_ => null
+		};
+	}
+
+	private static Language? TryGetMeaning(XElement xElement, out string meaning)
+	{
+		meaning = xElement.Value;
+
+		if (string.IsNullOrEmpty(meaning))
+			return null;
+
+		return xElement.Attribute(XNames.MeaningLanguage)?.Value switch
+		{
+			"fr" => Language.French,
+			"es" => Language.Spanish,
+			"pt" => Language.Portuguese,
+			null => Language.English,
+			_ => null,
 		};
 	}
 }

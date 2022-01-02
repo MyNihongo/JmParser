@@ -15,7 +15,10 @@ internal sealed class ParsingService
 			.ConfigureAwait(false);
 
 		var items = new KanjidicParsingService()
-			.Parse(xml);
+			.Parse(xml)
+			.ToArray();
+
+		var a = "";
 	}
 
 	private static async Task<XDocument> ParseXml(Args args, CancellationToken ct = default)
