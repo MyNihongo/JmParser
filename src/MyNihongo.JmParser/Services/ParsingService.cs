@@ -52,6 +52,5 @@ internal sealed class ParsingService
 
 	private static IEnumerable<JmdicModel> ParseJmdic(XDocument xml) =>
 		new JmdicParsingService()
-			.Parse(xml)
-			.Take(2);
+			.Parse(xml);
 }

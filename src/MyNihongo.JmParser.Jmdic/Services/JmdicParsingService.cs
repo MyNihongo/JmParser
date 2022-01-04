@@ -128,7 +128,8 @@ public sealed class JmdicParsingService : IJmdicParsingService
 
 		void AppendSense(JmdicModel.Sense? sense)
 		{
-			if (sense != null)
+			// there might be empty <sense> tags
+			if (sense != null && currentLanguage != null)
 			{
 				sense.StructureTypes = structures.ToArray();
 				sense.ExpressionTypes = expressions.ToArray();
