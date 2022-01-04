@@ -1,6 +1,7 @@
 ﻿using System.Xml.Linq;
 using MyNihongo.JmParser.Jmdic.Enums;
 using MyNihongo.JmParser.Jmdic.Models;
+using MyNihongo.JmParser.Jmdic.Resources;
 
 namespace MyNihongo.JmParser.Jmdic.Services;
 
@@ -14,7 +15,7 @@ public sealed class JmdicParsingService : IJmdicParsingService
 
 		JmdicModel.Sense? currentSense = null;
 		Language? currentLanguage = null;
-		List<string> structures = new(), expressions = new();
+		List<string> structures = new(), expressions = new(), glossaries = new();
 
 		foreach (var xElement in xDocument.DescendantNodes().OfType<XElement>())
 			switch (xElement.Name.LocalName)
@@ -83,6 +84,7 @@ public sealed class JmdicParsingService : IJmdicParsingService
 						{
 							currentSense.StructureTypes = structures.ToArray();
 							currentSense.ExpressionTypes = expressions.ToArray();
+							currentSense.Glossaries = glossaries.ToArray();
 
 							switch (currentLanguage)
 							{
@@ -122,7 +124,15 @@ public sealed class JmdicParsingService : IJmdicParsingService
 
 						structures.Clear();
 						expressions.Clear();
+						glossaries.Clear();
 						currentSense = new JmdicModel.Sense();
+						break;
+					}
+				case "gloss":
+					{
+						currentLanguage = GetGlossary(xElement, out var glossary);
+						glossaries.Add(glossary);
+
 						break;
 					}
 				case "pos":
@@ -138,10 +148,10 @@ public sealed class JmdicParsingService : IJmdicParsingService
 						break;
 					}
 				case "s_inf":
-				{
-					currentSense!.Info = xElement.Value;
-					break;
-				}
+					{
+						currentSense!.Info = xElement.Value;
+						break;
+					}
 			}
 	}
 
@@ -151,5 +161,24 @@ public sealed class JmdicParsingService : IJmdicParsingService
 			return symbol[1..^1];
 
 		throw new InvalidOperationException("Not a valid HTML symbol");
+	}
+
+	private static Language GetGlossary(in XElement xElement, out string value)
+	{
+		value = xElement.Value;
+
+		return xElement.Attribute(XNames.Language)?.Value switch
+		{
+			"dut" => Language.Dutch,
+			"fre" => Language.French,
+			"ger" => Language.German,
+			"hun" => Language.Hungarian,
+			"rus" => Language.Russian,
+			"slv" => Language.Slovenian,
+			"spa" => Language.Spanish,
+			"swe" => Language.Swedish,
+			null => Language.English,
+			_ => throw new InvalidOperationException($"Unknown {nameof(Language)}")
+		};
 	}
 }

@@ -37,5 +37,7 @@ public sealed record JmdicModel
 		public IReadOnlyList<string> ExpressionTypes { get; internal set; } = Array.Empty<string>();
 
 		public string Info { get; internal set; } = string.Empty;
+
+		public IReadOnlyList<string> Glossaries { get; internal set; } = Array.Empty<string>();
 	}
 }
