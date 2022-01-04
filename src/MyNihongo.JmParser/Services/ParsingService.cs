@@ -1,4 +1,6 @@
-﻿using System.Xml.Linq;
+﻿using System.Text.Encodings.Web;
+using System.Text.Json;
+using System.Xml.Linq;
 using MyNihongo.JmParser.Enums;
 using MyNihongo.JmParser.Jmdic.Models;
 using MyNihongo.JmParser.Jmdic.Services;
@@ -10,6 +12,13 @@ namespace MyNihongo.JmParser.Services;
 
 internal sealed class ParsingService
 {
+	private readonly JsonSerializerOptions _jsonOptions = new()
+	{
+		PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
+		Encoder = JavaScriptEncoder.UnsafeRelaxedJsonEscaping,
+		WriteIndented = true
+	};
+
 	public async Task ParseAsync(Args args)
 	{
 		if (!File.Exists(args.SourceFile))
@@ -24,6 +33,9 @@ internal sealed class ParsingService
 			ParseType.Jmdic => ParseJmdic(xml),
 			_ => throw new InvalidOperationException($"Unknown {nameof(ParseType)}: {args.ParseType}")
 		};
+
+		var stringValue = JsonSerializer.Serialize(data, _jsonOptions);
+		var a = "";
 	}
 
 	private static async Task<XDocument> ParseXml(Args args, CancellationToken ct = default)
@@ -40,5 +52,6 @@ internal sealed class ParsingService
 
 	private static IEnumerable<JmdicModel> ParseJmdic(XDocument xml) =>
 		new JmdicParsingService()
-			.Parse(xml);
+			.Parse(xml)
+			.Take(2);
 }

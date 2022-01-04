@@ -1,7 +1,6 @@
 ﻿using System.Xml.Linq;
 using MyNihongo.JmParser.Jmdic.Enums;
 using MyNihongo.JmParser.Jmdic.Models;
-using MyNihongo.JmParser.Jmdic.Resources;
 
 namespace MyNihongo.JmParser.Jmdic.Services;
 
@@ -9,6 +8,8 @@ public sealed class JmdicParsingService : IJmdicParsingService
 {
 	public IEnumerable<JmdicModel> Parse(XDocument xDocument)
 	{
+		var entities = new Dictionary<string, string>(239);
+
 		JmdicModel? current = null;
 		List<string> alternativeWords = new(), alternativeReadings = new();
 		List<JmdicModel.Sense> english = new(), dutch = new(), french = new(), german = new(), hungarian = new(), russian = new(), slovenian = new(), spanish = new(), swedish = new();
@@ -17,148 +18,193 @@ public sealed class JmdicParsingService : IJmdicParsingService
 		Language? currentLanguage = null;
 		List<string> structures = new(), expressions = new(), glossaries = new();
 
-		foreach (var xElement in xDocument.DescendantNodes().OfType<XElement>())
-			switch (xElement.Name.LocalName)
+		foreach (var xNode in xDocument.DescendantNodes())
+		{
+			switch (xNode)
 			{
-				case "entry":
+				case XDocumentType xDocumentType when entities.Count == 0:
 					{
-						if (!string.IsNullOrEmpty(current?.Id))
+						entities = LoadEntities(entities, xDocumentType);
+						break;
+
+					}
+				case XElement xElement:
+					{
+						switch (xElement.Name.LocalName)
 						{
-							currentSense = null;
-							currentLanguage = null;
+							case "entry":
+								{
+									if (!string.IsNullOrEmpty(current?.Id))
+									{
+										AppendSense(currentSense);
+										currentSense = null;
 
-							current.AlternativeWords = alternativeWords.ToArray();
-							current.AlternativeReadings = alternativeReadings.ToArray();
-							current.EnglishSenses = english.ToArray();
-							current.DutchSenses = dutch.ToArray();
-							current.FrenchSenses = french.ToArray();
-							current.GermanSenses = german.ToArray();
-							current.HungarianSenses = hungarian.ToArray();
-							current.RussianSenses = russian.ToArray();
-							current.SlovenianSenses = slovenian.ToArray();
-							current.SpanishSenses = spanish.ToArray();
-							current.SwedishSenses = swedish.ToArray();
-							yield return current;
+										current.AlternativeWords = alternativeWords.ToArray();
+										current.AlternativeReadings = alternativeReadings.ToArray();
+										current.EnglishSenses = english.ToArray();
+										current.DutchSenses = dutch.ToArray();
+										current.FrenchSenses = french.ToArray();
+										current.GermanSenses = german.ToArray();
+										current.HungarianSenses = hungarian.ToArray();
+										current.RussianSenses = russian.ToArray();
+										current.SlovenianSenses = slovenian.ToArray();
+										current.SpanishSenses = spanish.ToArray();
+										current.SwedishSenses = swedish.ToArray();
+										yield return current;
+									}
+
+									alternativeWords.Clear();
+									alternativeReadings.Clear();
+									english.Clear();
+									dutch.Clear();
+									french.Clear();
+									german.Clear();
+									hungarian.Clear();
+									russian.Clear();
+									slovenian.Clear();
+									spanish.Clear();
+									swedish.Clear();
+									current = new JmdicModel();
+									break;
+								}
+							case "ent_seq":
+								{
+									current!.Id = xElement.Value;
+									break;
+								}
+							case "keb":
+								{
+									if (string.IsNullOrEmpty(current!.Word))
+										current.Word = xElement.Value;
+									else
+										alternativeWords.Add(xElement.Value);
+
+									break;
+								}
+							case "reb":
+								{
+									if (string.IsNullOrEmpty(current!.Reading))
+										current.Reading = xElement.Value;
+									else
+										alternativeReadings.Add(xElement.Value);
+
+									break;
+								}
+							case "sense":
+								{
+									AppendSense(currentSense);
+									currentSense = new JmdicModel.Sense();
+									break;
+								}
+							case "gloss":
+								{
+									currentLanguage = GetGlossary(xElement, out var glossary);
+									glossaries.Add(glossary);
+
+									break;
+								}
+							case "pos":
+								{
+									var value = UnwrapHtmlSymbol(entities, xElement.Value);
+									structures.Add(value);
+									break;
+								}
+							case "misc":
+								{
+									var value = UnwrapHtmlSymbol(entities, xElement.Value);
+									expressions.Add(value);
+									break;
+								}
+							case "s_inf":
+								{
+									currentSense!.Info = xElement.Value;
+									break;
+								}
 						}
-
-						alternativeWords.Clear();
-						alternativeReadings.Clear();
-						english.Clear();
-						dutch.Clear();
-						french.Clear();
-						german.Clear();
-						hungarian.Clear();
-						russian.Clear();
-						slovenian.Clear();
-						spanish.Clear();
-						swedish.Clear();
-						current = new JmdicModel();
-						break;
-					}
-				case "ent_seq":
-					{
-						current!.Id = xElement.Value;
-						break;
-					}
-				case "keb":
-					{
-						if (string.IsNullOrEmpty(current!.Word))
-							current.Word = xElement.Value;
-						else
-							alternativeWords.Add(xElement.Value);
-
-						break;
-					}
-				case "reb":
-					{
-						if (string.IsNullOrEmpty(current!.Reading))
-							current.Reading = xElement.Value;
-						else
-							alternativeReadings.Add(xElement.Value);
-
-						break;
-					}
-				case "sense":
-					{
-						if (currentSense != null)
-						{
-							currentSense.StructureTypes = structures.ToArray();
-							currentSense.ExpressionTypes = expressions.ToArray();
-							currentSense.Glossaries = glossaries.ToArray();
-
-							switch (currentLanguage)
-							{
-								case Language.English:
-									english.Add(currentSense);
-									break;
-								case Language.Dutch:
-									dutch.Add(currentSense);
-									break;
-								case Language.French:
-									french.Add(currentSense);
-									break;
-								case Language.German:
-									german.Add(currentSense);
-									break;
-								case Language.Hungarian:
-									hungarian.Add(currentSense);
-									break;
-								case Language.Russian:
-									russian.Add(currentSense);
-									break;
-								case Language.Slovenian:
-									slovenian.Add(currentSense);
-									break;
-								case Language.Spanish:
-									spanish.Add(currentSense);
-									break;
-								case Language.Swedish:
-									swedish.Add(currentSense);
-									break;
-								default:
-									throw new InvalidOperationException("Language is not defined");
-							}
-
-							currentLanguage = null;
-						}
-
-						structures.Clear();
-						expressions.Clear();
-						glossaries.Clear();
-						currentSense = new JmdicModel.Sense();
-						break;
-					}
-				case "gloss":
-					{
-						currentLanguage = GetGlossary(xElement, out var glossary);
-						glossaries.Add(glossary);
-
-						break;
-					}
-				case "pos":
-					{
-						var value = UnwrapHtmlSymbol(xElement.Value);
-						structures.Add(value);
-						break;
-					}
-				case "misc":
-					{
-						var value = UnwrapHtmlSymbol(xElement.Value);
-						expressions.Add(value);
-						break;
-					}
-				case "s_inf":
-					{
-						currentSense!.Info = xElement.Value;
 						break;
 					}
 			}
+		}
+
+		void AppendSense(JmdicModel.Sense? sense)
+		{
+			if (sense != null)
+			{
+				sense.StructureTypes = structures.ToArray();
+				sense.ExpressionTypes = expressions.ToArray();
+				sense.Glossaries = glossaries.ToArray();
+
+				switch (currentLanguage)
+				{
+					case Language.English:
+						english.Add(sense);
+						break;
+					case Language.Dutch:
+						dutch.Add(sense);
+						break;
+					case Language.French:
+						french.Add(sense);
+						break;
+					case Language.German:
+						german.Add(sense);
+						break;
+					case Language.Hungarian:
+						hungarian.Add(sense);
+						break;
+					case Language.Russian:
+						russian.Add(sense);
+						break;
+					case Language.Slovenian:
+						slovenian.Add(sense);
+						break;
+					case Language.Spanish:
+						spanish.Add(sense);
+						break;
+					case Language.Swedish:
+						swedish.Add(sense);
+						break;
+					default:
+						throw new InvalidOperationException("Language is not defined");
+				}
+
+				currentLanguage = null;
+			}
+
+			structures.Clear();
+			expressions.Clear();
+			glossaries.Clear();
+		}
 	}
 
-	private static string UnwrapHtmlSymbol(in string symbol)
+	private static Dictionary<string, string> LoadEntities(Dictionary<string, string> dictionary, XDocumentType xDocumentType)
 	{
-		if (symbol[0] == '&' && symbol[^1] == ';')
-			return symbol[1..^1];
+		const string entryStart = "<!ENTITY";
+
+		if (!string.IsNullOrEmpty(xDocumentType.InternalSubset))
+		{
+			var lines = xDocumentType.InternalSubset
+				.Split('\n', StringSplitOptions.TrimEntries)
+				.Where(static x => x.StartsWith(entryStart));
+
+			foreach (var line in lines)
+			{
+				int splitIndex = line.IndexOf('"', entryStart.Length),
+					endIndex = line.LastIndexOf('"');
+
+				var key = line[(splitIndex + 1)..endIndex].Trim();
+				var value = line[entryStart.Length..splitIndex].Trim();
+
+				dictionary[key] = value;
+			}
+		}
+
+		return dictionary;
+	}
+
+	private static string UnwrapHtmlSymbol(IReadOnlyDictionary<string, string> entities, in string entityValue)
+	{
+		if (entities.TryGetValue(entityValue, out var value))
+			return value;
 
 		throw new InvalidOperationException("Not a valid HTML symbol");
 	}
@@ -167,18 +213,26 @@ public sealed class JmdicParsingService : IJmdicParsingService
 	{
 		value = xElement.Value;
 
-		return xElement.Attribute(XNames.Language)?.Value switch
+		foreach (var xAttribute in xElement.Attributes())
 		{
-			"dut" => Language.Dutch,
-			"fre" => Language.French,
-			"ger" => Language.German,
-			"hun" => Language.Hungarian,
-			"rus" => Language.Russian,
-			"slv" => Language.Slovenian,
-			"spa" => Language.Spanish,
-			"swe" => Language.Swedish,
-			null => Language.English,
-			_ => throw new InvalidOperationException($"Unknown {nameof(Language)}")
-		};
+			if (xAttribute.Name.LocalName != "lang")
+				continue;
+
+			return xAttribute.Value switch
+			{
+				"dut" => Language.Dutch,
+				"fre" => Language.French,
+				"ger" => Language.German,
+				"hun" => Language.Hungarian,
+				"rus" => Language.Russian,
+				"slv" => Language.Slovenian,
+				"spa" => Language.Spanish,
+				"swe" => Language.Swedish,
+				"eng" => Language.English,
+				_ => throw new InvalidOperationException($"Unknown {nameof(Language)}")
+			};
+		}
+
+		return Language.English;
 	}
 }
