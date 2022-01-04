@@ -137,6 +137,11 @@ public sealed class JmdicParsingService : IJmdicParsingService
 						expressions.Add(value);
 						break;
 					}
+				case "s_inf":
+				{
+					currentSense!.Info = xElement.Value;
+					break;
+				}
 			}
 	}
 
