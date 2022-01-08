@@ -6,7 +6,9 @@ using MyNihongo.JmParser.Jmdic.Models;
 using MyNihongo.JmParser.Jmdic.Services;
 using MyNihongo.JmParser.Kanjidic.Models;
 using MyNihongo.JmParser.Kanjidic.Services;
+using MyNihongo.JmParser.Models;
 using MyNihongo.JmParser.Utils;
+using MyNihongo.JmParser.Utils.Extensions;
 
 namespace MyNihongo.JmParser.Services;
 
@@ -27,25 +29,14 @@ internal sealed class ParsingService
 		var xml = await ParseXml(args)
 			.ConfigureAwait(false);
 
-		object data = args.ParseType switch
+		var task = args.ParseType switch
 		{
-			ParseType.Kanjidic => ParseKanjidic(xml),
-			ParseType.Jmdic => ParseJmdic(xml),
+			ParseType.Kanjidic => ParseKanjidic(xml).SerializeAsync(args),
+			ParseType.Jmdic => ParseJmdic(xml).SerializeAsync(args),
 			_ => throw new InvalidOperationException($"Unknown {nameof(ParseType)}: {args.ParseType}")
 		};
 
-		if (string.IsNullOrEmpty(args.Destination))
-		{
-			var stringValue = JsonSerializer.Serialize(data, _jsonOptions);
-			var a = "";
-		}
-		else
-		{
-			await using var fileStream = new FileStream(args.Destination, FileMode.Create);
-
-			await JsonSerializer.SerializeAsync(fileStream, data)
-				.ConfigureAwait(false);
-		}
+		var stringData = await task.ConfigureAwait(false);
 	}
 
 	private static async Task<XDocument> ParseXml(Args args, CancellationToken ct = default)
@@ -56,11 +47,25 @@ internal sealed class ParsingService
 			.ConfigureAwait(false);
 	}
 
-	private static IEnumerable<KanjidicModel> ParseKanjidic(XDocument xml) =>
-		new KanjidicParsingService()
+	private JsonContext<KanjidicModel> ParseKanjidic(XDocument xml)
+	{
+		var data = new KanjidicParsingService()
 			.Parse(xml);
 
-	private static IEnumerable<JmdicModel> ParseJmdic(XDocument xml) =>
-		new JmdicParsingService()
+		var jsonTypeInfo = new KanjidicModelContext(_jsonOptions)
+			.IEnumerableKanjidicModel;
+
+		return new JsonContext<KanjidicModel>(data, jsonTypeInfo);
+	}
+
+	private JsonContext<JmdicModel> ParseJmdic(XDocument xml)
+	{
+		var data = new JmdicParsingService()
 			.Parse(xml);
+
+		var jsonTypeInfo = new JmdicModelContext(_jsonOptions)
+			.IEnumerableJmdicModel;
+
+		return new JsonContext<JmdicModel>(data, jsonTypeInfo);
+	}
 }

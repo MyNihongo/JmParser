@@ -38,7 +38,7 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 					french.Clear();
 					spanish.Clear();
 					portuguese.Clear();
-					current = new KanjidicModel(id);
+					current = new KanjidicModel { Id = id };
 					break;
 				}
 				case "literal":

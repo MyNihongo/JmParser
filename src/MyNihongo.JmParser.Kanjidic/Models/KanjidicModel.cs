@@ -2,8 +2,15 @@
 
 namespace MyNihongo.JmParser.Kanjidic.Models;
 
-public sealed record KanjidicModel(int Id)
+[JsonSerializable(typeof(IEnumerable<KanjidicModel>))]
+public partial class KanjidicModelContext : JsonSerializerContext
 {
+}
+
+public sealed record KanjidicModel
+{
+	public int Id { get; internal set; }
+
 	[JsonPropertyName("c")]
 	public char Character { get; internal set; }
 

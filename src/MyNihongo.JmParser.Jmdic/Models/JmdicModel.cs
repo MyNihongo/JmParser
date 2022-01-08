@@ -2,6 +2,11 @@
 
 namespace MyNihongo.JmParser.Jmdic.Models;
 
+[JsonSerializable(typeof(IEnumerable<JmdicModel>))]
+public partial class JmdicModelContext : JsonSerializerContext
+{
+}
+
 public sealed record JmdicModel
 {
 	public string Id { get; internal set; } = string.Empty;
