@@ -34,8 +34,18 @@ internal sealed class ParsingService
 			_ => throw new InvalidOperationException($"Unknown {nameof(ParseType)}: {args.ParseType}")
 		};
 
-		var stringValue = JsonSerializer.Serialize(data, _jsonOptions);
-		var a = "";
+		if (string.IsNullOrEmpty(args.Destination))
+		{
+			var stringValue = JsonSerializer.Serialize(data, _jsonOptions);
+			var a = "";
+		}
+		else
+		{
+			await using var fileStream = new FileStream(args.Destination, FileMode.Create);
+
+			await JsonSerializer.SerializeAsync(fileStream, data)
+				.ConfigureAwait(false);
+		}
 	}
 
 	private static async Task<XDocument> ParseXml(Args args, CancellationToken ct = default)
