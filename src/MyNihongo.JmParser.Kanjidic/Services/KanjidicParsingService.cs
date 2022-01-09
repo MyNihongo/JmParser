@@ -19,7 +19,7 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 			{
 				case "character":
 				{
-					if (current != null && current.Character != default)
+					if (!string.IsNullOrEmpty(current?.Character))
 					{
 						id++;
 
@@ -43,15 +43,7 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 				}
 				case "literal":
 				{
-					if (xElement.Value.Length != 1)
-					{
-						current = null;
-						Console.WriteLine("Invalid length");
-
-						goto case "character";
-					}
-
-					current!.Character = xElement.Value[0];
+					current!.Character = xElement.Value;
 					break;
 				}
 				case "jlpt":

@@ -12,7 +12,7 @@ public sealed record KanjidicModel
 	public int Id { get; internal set; }
 
 	[JsonPropertyName("c")]
-	public char Character { get; internal set; }
+	public string Character { get; internal set; } = string.Empty;
 
 	[JsonPropertyName("jlpt")]
 	public byte JlptLevel { get; internal set; }
