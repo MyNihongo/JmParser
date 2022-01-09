@@ -13,7 +13,6 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 		List<string> kunYomi = new(), onYomi = new();
 		List<string> english = new(), french = new(), spanish = new(), portuguese = new();
 
-		var id = 1;
 		foreach (var xElement in xDocument.DescendantNodes().OfType<XElement>())
 			switch (xElement.Name.LocalName)
 			{
@@ -21,8 +20,6 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 				{
 					if (!string.IsNullOrEmpty(current?.Character))
 					{
-						id++;
-
 						current.KunYomi = kunYomi.ToArray();
 						current.OnYomi = onYomi.ToArray();
 						current.English = english.ToArray();
@@ -38,7 +35,7 @@ public sealed class KanjidicParsingService : IKanjidicParsingService
 					french.Clear();
 					spanish.Clear();
 					portuguese.Clear();
-					current = new KanjidicModel { Id = id };
+					current = new KanjidicModel();
 					break;
 				}
 				case "literal":

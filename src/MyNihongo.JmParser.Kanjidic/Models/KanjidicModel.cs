@@ -9,8 +9,6 @@ public partial class KanjidicModelContext : JsonSerializerContext
 
 public sealed record KanjidicModel
 {
-	public int Id { get; internal set; }
-
 	[JsonPropertyName("c")]
 	public string Character { get; internal set; } = string.Empty;
 
